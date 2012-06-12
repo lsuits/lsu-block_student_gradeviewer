@@ -39,12 +39,12 @@ class block_student_gradeviewer extends block_list {
 
         if ($mentor) {
             $url = new moodle_url('/blocks/student_gradeviewer/viewgrades.php');
-            $this->items[] = html_writer::link($url, $_s('viewgrades'));
+            $content->items[] = html_writer::link($url, $_s('viewgrades'));
         }
 
         if ($admin) {
             $url = new moodle_url('/blocks/student_gradeviewer/admin.php');
-            $this->items[] = html_writer::link($url, $_s('admin'));
+            $content->items[] = html_writer::link($url, $_s('admin'));
         }
 
         $this->content = $content;
