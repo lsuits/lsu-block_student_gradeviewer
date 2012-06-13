@@ -23,6 +23,7 @@ class admin_person_mentor extends student_mentor_admin_page {
         $options = array();
 
         $to_named = function($user) { return fullname($user); };
+        $to_userid = function($assign) { return $assign->userid; };
 
         foreach ($this->parents as $parent) {
             $label = get_string($parent, 'block_student_gradeviewer');
@@ -33,14 +34,16 @@ class admin_person_mentor extends student_mentor_admin_page {
                 continue;
             }
 
-            $filters = ues::where()->id->in(array_keys($assigns));
+            $userids = array_values(array_map($to_userid, $assigns));
+
+            $filters = ues::where()->id->in($userids);
             $users = ues_user::get_all($filters, 'firstname, lastname ASC');
 
             if (isset($users[$this->path])) {
                 $selected = fullname($users[$this->path]);
             }
 
-            $options[$label] = array_map($to_named, $users);
+            $options[] = array($label => array_map($to_named, $users));
         }
 
         $url = new moodle_url('/blocks/student_gradeviewer/admin.php', array(
@@ -55,7 +58,7 @@ class admin_person_mentor extends student_mentor_admin_page {
                 'block_student_gradeviewer', $selected
             );
 
-            $html .= $OUTPUT->heading($assignment);
+            $html .= $OUTPUT->heading($assignment, 3);
         }
 
         return $html;

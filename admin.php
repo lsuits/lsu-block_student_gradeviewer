@@ -21,14 +21,12 @@ if (!$admin) {
 $classes = student_mentor_admin_page::gather_classes();
 
 if (!isset($classes[$admin_type])) {
-    $form = $classes[person_mentor::get_name()];
-} else {
-    $form = $classes[$admin_type];
+    $admin_type = 'person_mentor';
 }
 
-$base_url = new moodle_url('/blocks/student_gradeviewer/admin.php', array(
-    'type' => $admin_type
-));
+$form = $classes[$admin_type];
+
+$base_url = new moodle_url('/blocks/student_gradeviewer/admin.php');
 
 $_s = ues::gen_str('block_student_gradeviewer');
 $blockname = $_s('pluginname');
@@ -43,7 +41,18 @@ $PAGE->navbar->add($blockname);
 $PAGE->navbar->add($heading);
 
 echo $OUTPUT->header();
+
+$to_name = function($class) { return $class->get_name(); };
+echo $OUTPUT->single_select(
+    $base_url, 'type',
+    array_map($to_name, $classes), $admin_type
+);
+
 echo $OUTPUT->heading($form->get_name());
+
+if ($data = data_submitted()) {
+    $form->process_data($data);
+}
 
 echo $form->ui_filters();
 echo $form->user_form();

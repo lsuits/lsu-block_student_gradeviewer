@@ -19,6 +19,11 @@ $string['na_person'] = 'Select a mentor to assign to students to.';
 $string['assigning_to'] = 'Assigning mentors to: {$a}';
 $string['assigning_students'] = 'Assigning students to: {$a}';
 
+$string['selected'] = 'Selected';
+$string['available'] = 'Available';
+
+$string['admin_mentor'] = 'Mentor Assignment';
+
 // Settings strings
 $string['role'] = 'Role assignment';
 $string['role_help'] = 'Below are configured role mappings used by the Student Grade Viewer when assigning mentors to their respective areas of concern.';

@@ -13,7 +13,6 @@ abstract class student_mentor_admin_page {
 
     private $context;
     private $roleid;
-    private $component = 'block_student_gradeviewer';
 
     public function __construct($type, $path, $capabilities = array()) {
         $this->type = $type;
@@ -77,7 +76,7 @@ abstract class student_mentor_admin_page {
         if (class_exists($class)) {
             $assign = $class::get($params);
             if (empty($assign)) {
-                $assign = $class::upgrade($params);
+                $assign = $class::upgrade((object) $params);
             }
 
             $assign->save();
@@ -94,7 +93,6 @@ abstract class student_mentor_admin_page {
         if (class_exists($class) and $assign = $class::get($params)) {
             $class::delete($assign->id);
         }
-
     }
 
     abstract public function ui_filters();
@@ -107,20 +105,44 @@ abstract class student_mentor_admin_page {
 
         $selected_users = $this->get_selected_users();
         $selected_select = html_writer::select(
-            $selected_users, 'selected_users', '', '',
-            array('class' => 'main_selector', 'multiple' => 'multiple')
+            $selected_users, 'selected_users[]', '', '',
+            array('class' => 'main_selector', 'multiple' => '', 'size' => 15)
         );
 
-        $available_users = $this->get_available_users();
+        $search = optional_param('searchtext', '', PARAM_RAW);
+
+        $available_users = $this->get_available_users($search);
         $available_select = html_writer::select(
-            $available_users, 'available_users', '', '',
-            array('class' => 'main_selector', 'multiple' => 'multiple')
+            $available_users, 'available_users[]', '', '',
+            array('class' => 'main_selector', 'multiple' => '', 'size' => 15)
         );
+
+        $_s = ues::gen_str('block_student_gradeviewer');
+        $header = array('class' => 'select_header');
+
+        $table->head = array($_s('selected'), $_s('available'));
 
         $table->data = array(
             new html_table_row(array(
                 $selected_select,
                 $available_select
+            )),
+            new html_table_row(array('',
+                html_writer::start_tag('div', array('class' => 'searchbox')) .
+                html_writer::empty_tag('input', array(
+                    'type' => 'text',
+                    'name' => 'searchtext',
+                    'class' => 'searchtext',
+                    'value' => $search,
+                    'placeholder' => get_string('search')
+                )) .
+                html_writer::empty_tag('input', array(
+                    'type' => 'submit',
+                    'name' => 'search',
+                    'class' => 'searchbutton',
+                    'value' => get_string('search')
+                )) .
+                html_writer::end_tag('div')
             ))
         );
 
@@ -138,16 +160,43 @@ abstract class student_mentor_admin_page {
             $hidden_input('sesskey', sesskey())
         );
 
-        $form = html_writer::tag('form', $hiddens . html_writer::table($table));
+        $submits = html_writer::start_tag('div', array('class' => 'submitbuttons'));
+        $submits .= html_writer::empty_tag('input', array(
+            'type' => 'submit',
+            'name' => 'add',
+            'value' => get_string('add')
+        ));
+        $submits .= html_writer::empty_tag('input', array(
+            'type' => 'submit',
+            'name' => 'remove',
+            'value' => get_string('remove')
+        ));
+        $submits .= html_writer::end_tag('div');
+
+        $form = html_writer::start_tag('form', array('method' => 'POST'));
+        $form .= $hiddens . html_writer::table($table) . $submits;
+        $form .= html_writer::end_tag('form');
 
         return $OUTPUT->box($form);
     }
 
-    // TODO: exclude already selected users?
-    public function get_available_users() {
-        global $DB;
+    public function process_data($data) {
+        $confirmed = confirm_sesskey($data->sesskey);
 
-        $search = optional_param('searchtext', '', PARAM_RAW);
+        if ($confirmed) {
+            foreach ($data->available_users as $userid) {
+                if (isset($data->add)) {
+                    $this->perform_add($userid);
+                } else if (isset($data->remove)) {
+                    $this->perform_remove($userid);
+                }
+            }
+        }
+    }
+
+    // TODO: exclude already selected users?
+    public function get_available_users($search) {
+        global $DB;
 
         // Only show users after query
         if (empty($search)) {
@@ -156,16 +205,17 @@ abstract class student_mentor_admin_page {
 
         $fullname = $DB->sql_fullname();
 
-        $fullname_like = $DB->sql_like($fullname, $search);
-        $email_like = $DB->sql_like('email', $search);
+        $fullname_like = $DB->sql_like($fullname, ':fullname', false, false);
+        $email_like = $DB->sql_like('email', ':email', false, false);
 
         $sql = "SELECT * FROM {user}
-            WHERE deleted != 0
-              AND ($fullname_like OR $email_like)";
+            WHERE deleted = 0 AND ($fullname_like OR $email_like)";
 
-        $users = $DB->get_records_sql($sql, null, 0, 1000);
+        $params = array('fullname' => "%$search%", 'email' => "%$search%");
 
-        $to_named = function($u) { return fullname($u); };
+        $users = $DB->get_records_sql($sql, $params, 0, 100);
+
+        $to_named = function($u) { return fullname($u) . " ($u->email)"; };
         return array_map($to_named, $users);
     }
 
@@ -175,7 +225,8 @@ abstract class student_mentor_admin_page {
         $selected = $class::get_all(ues::where()->path->equal($this->path));
 
         $to_named = function($assignment) {
-            return fullname($assignment->user());
+            $user = $assignment->user();
+            return fullname($user). " ($user->email)";
         };
 
         return array_map($to_named, $selected);
@@ -213,6 +264,8 @@ abstract class student_mentor_admin_page {
 }
 
 abstract class student_mentor_role_assign extends student_mentor_admin_page {
+    private $component = 'block_student_gradeviewer';
+
     public function perform_add($userid) {
         $context = $this->get_context();
         $roleid = $this->check_role();
