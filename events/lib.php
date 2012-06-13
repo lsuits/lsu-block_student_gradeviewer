@@ -5,11 +5,21 @@ ues::require_daos();
 
 abstract class student_gradeviewer_handlers {
     public static function user_deleted($user) {
-        $params = array(
-            'name' => 'user_mentor_person',
+        // Unload deleted student
+        $mentee_params = array(
+            'name' => 'user_person_mentor',
             'value' => $user->id
         );
 
-        return ues_user::delete_meta($params);
+        // Unload delted mentor
+        $mentor_params = array(
+            'name' => 'user_person_mentor',
+            'userid' => $user->id
+        );
+
+        return (
+            ues_user::delete_meta($mentee_params) and
+            ues_user::delete_meta($mentor_params)
+        );
     }
 }

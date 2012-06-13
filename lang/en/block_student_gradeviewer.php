@@ -5,6 +5,14 @@ $string['pluginname'] = 'Student Grade Viewer';
 $string['viewgrades'] = 'Mentees';
 $string['admin'] = 'Administration';
 
+// Error strings
+$string['no_permission'] = 'You do not have the correct permission to view this page. If you think that you should, please contact the Moodle administrator.';
+
+// Administration strings
+$string['admin_person'] = 'Assign Mentees';
+$string['admin_sports'] = 'Assign Athletic Mentors';
+$string['admin_academic'] = 'Assign Course Mentors';
+
 // Settings strings
 $string['role'] = 'Role assignment';
 $string['role_help'] = 'Below are configured role mappings used by the Student Grade Viewer when assigning mentors to their respective areas of concern.';
