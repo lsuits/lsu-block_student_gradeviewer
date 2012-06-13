@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(dirname(__FILE__)) . '/classes/lib.php';
+
 abstract class student_mentor_admin_page {
     protected $name;
     protected $type;
@@ -9,12 +11,39 @@ abstract class student_mentor_admin_page {
     protected $capabilities = array();
     protected $errors = array();
 
+    private $context;
+    private $roleid;
+    private $component = 'block_student_gradeviewer';
+
+    public function __construct($type, $path, $capabilities = array()) {
+        $this->type = $type;
+        $this->name = get_string('admin_' . $type, 'block_student_gradeviewer');
+        $this->path = $path;
+
+        if (empty($capabilities)) {
+            $capabilities = array(
+                'block/student_gradeviewer:sportsadmin',
+                'block/student_gradeviewer:academicadmin'
+            );
+        }
+
+        $this->capabilities = $capabilities;
+    }
+
     public function can_use() {
         $c = get_context_instance(CONTEXT_SYSTEM);
 
         return array_reduce($this->capabilities, function($in, $cap) use ($c) {
-            return $in || has_capbility($cap, $c);
+            return $in || has_capability($cap, $c);
         });
+    }
+
+    public function get_context() {
+        if (empty($this->context)) {
+            $this->context = get_context_instance(CONTEXT_SYSTEM);
+        }
+
+        return $this->context;
     }
 
     public function get_name() {
@@ -30,34 +59,126 @@ abstract class student_mentor_admin_page {
     }
 
     public function check_role() {
-        $roleid = get_config('block_student_gradeviewer', $this->get_type());
+        if (empty($this->roleid)) {
+            $this->roleid = get_config('block_student_gradeviewer', $this->get_type());
+        }
 
-        return $roleid;
+        return $this->roleid;
     }
 
     public function perform_add($userid) {
-        $context = get_context_instance(CONTEXT_SYSTEM);
-        $roleid = $this->check_role();
-        $component = 'block_student_gradeviewer';
+        $params = array(
+            'userid' => $userid,
+            'path' => $this->path
+        );
 
-        if (role_assign($roleid, $userid, $context->id, $component)) {
-            $user = ues_user::get(array('id' => $userid), true);
-            $user->{'user_' . $this->get_type()} = $this->path;
+        $class = $this->type;
 
-            $user->save();
+        if (class_exists($class)) {
+            $assign = $class::get($params);
+            if (empty($assign)) {
+                $assign = $class::upgrade($params);
+            }
+
+            $assign->save();
         }
     }
 
     public function perform_remove($userid) {
-        $context = get_context_instance(CONTEXT_SYSTEM);
-        $roleid = $this->check_role();
+        $params = array(
+            'userid' => $userid,
+            'path' => $this->path
+        );
 
-        $user = ues_user::get(array('id' => $userid), true);
-        $field = 'user_' . $this->get_type();
-
-        if (isset($user->$field)) {
-            $user->delete_meta(array('name' => $field, 'userid' => $userid));
+        $class = $this->type;
+        if (class_exists($class) and $assign = $class::get($params)) {
+            $class::delete($assign->id);
         }
+
+    }
+
+    abstract public function ui_filters();
+
+    // TODO: justifiable custom output renderer?
+    public function user_form() {
+        global $OUTPUT;
+
+        $table = new html_table();
+
+        $selected_users = $this->get_selected_users();
+        $selected_select = html_writer::select(
+            $selected_users, 'selected_users', '', '',
+            array('class' => 'main_selector', 'multiple' => 'multiple')
+        );
+
+        $available_users = $this->get_available_users();
+        $available_select = html_writer::select(
+            $available_users, 'available_users', '', '',
+            array('class' => 'main_selector', 'multiple' => 'multiple')
+        );
+
+        $table->data = array(
+            new html_table_row(array(
+                $selected_select,
+                $available_select
+            ))
+        );
+
+        $hidden_input = function($name, $value) {
+            return html_writer::empty_tag('input', array(
+                'type' => 'hidden',
+                'name' => $name,
+                'value' => $value
+            ));
+        };
+
+        $hiddens = html_writer::tag('div',
+            $hidden_input('path', $this->path) .
+            $hidden_input('type', $this->get_type()) .
+            $hidden_input('sesskey', sesskey())
+        );
+
+        $form = html_writer::tag('form', $hiddens . html_writer::table($table));
+
+        return $OUTPUT->box($form);
+    }
+
+    // TODO: exclude already selected users?
+    public function get_available_users() {
+        global $DB;
+
+        $search = optional_param('searchtext', '', PARAM_RAW);
+
+        // Only show users after query
+        if (empty($search)) {
+            return array();
+        }
+
+        $fullname = $DB->sql_fullname();
+
+        $fullname_like = $DB->sql_like($fullname, $search);
+        $email_like = $DB->sql_like('email', $search);
+
+        $sql = "SELECT * FROM {user}
+            WHERE deleted != 0
+              AND ($fullname_like OR $email_like)";
+
+        $users = $DB->get_records_sql($sql, null, 0, 1000);
+
+        $to_named = function($u) { return fullname($u); };
+        return array_map($to_named, $users);
+    }
+
+    public function get_selected_users() {
+        $class = $this->type;
+
+        $selected = $class::get_all(ues::where()->path->equal($this->path));
+
+        $to_named = function($assignment) {
+            return fullname($assignment->user());
+        };
+
+        return array_map($to_named, $selected);
     }
 
     public static function gather_files() {
@@ -88,5 +209,34 @@ abstract class student_mentor_admin_page {
         $types = array_map($to_type, $usable);
 
         return array_combine($types, $usable);
+    }
+}
+
+abstract class student_mentor_role_assign extends student_mentor_admin_page {
+    public function perform_add($userid) {
+        $context = $this->get_context();
+        $roleid = $this->check_role();
+
+        if (role_assign($roleid, $userid, $context->id, $this->component)) {
+            parent::perform_add($userid);
+        }
+    }
+
+    public function perform_remove($userid) {
+        parent::perform_remove($userid);
+
+        $context = $this->get_context();
+        $roleid = $this->check_role();
+        $component = $this->component;
+
+        $params = array('userid' => $userid);
+        $total_assigns = (
+            $class::count($params) +
+            person_mentor::count($params)
+        );
+
+        if (empty($total_assigns)) {
+            role_unassign($roleid, $userid, $context->id, $component);
+        }
     }
 }

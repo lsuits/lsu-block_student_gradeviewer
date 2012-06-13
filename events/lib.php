@@ -1,25 +1,17 @@
 <?php
 
-require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
-ues::require_daos();
+require_once $CFG->dirroot . '/block/student_gradeviewer/classes/lib.php';
 
+// TODO: perhaps handling the user role assignment events to clear DB
 abstract class student_gradeviewer_handlers {
     public static function user_deleted($user) {
-        // Unload deleted student
-        $mentee_params = array(
-            'name' => 'user_person_mentor',
-            'value' => $user->id
-        );
-
-        // Unload delted mentor
-        $mentor_params = array(
-            'name' => 'user_person_mentor',
-            'userid' => $user->id
-        );
+        $mentor = ues::where()->userid->equal($user->id);
+        $student = ues::where()->path->equal($user->id);
 
         return (
-            ues_user::delete_meta($mentee_params) and
-            ues_user::delete_meta($mentor_params)
+            person_mentor::delete_all($student) and
+            academic_mentor::delete_all($mentor) and
+            sports_mentor::delete_all($mentor)
         );
     }
 }

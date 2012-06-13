@@ -9,9 +9,15 @@ $string['admin'] = 'Administration';
 $string['no_permission'] = 'You do not have the correct permission to view this page. If you think that you should, please contact the Moodle administrator.';
 
 // Administration strings
-$string['admin_person'] = 'Assign Mentees';
-$string['admin_sports'] = 'Assign Athletic Mentors';
-$string['admin_academic'] = 'Assign Course Mentors';
+$string['admin_person_mentor'] = 'Assign Students to Mentors';
+$string['admin_sports_mentor'] = 'Assign Athletic Mentors';
+$string['admin_academic_mentor'] = 'Assign Course Mentors';
+
+$string['na_sports'] = 'Do not assign to a specific sport';
+$string['na_person'] = 'Select a mentor to assign to students to.';
+
+$string['assigning_to'] = 'Assigning mentors to: {$a}';
+$string['assigning_students'] = 'Assigning students to: {$a}';
 
 // Settings strings
 $string['role'] = 'Role assignment';
