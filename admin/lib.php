@@ -111,7 +111,9 @@ abstract class student_mentor_admin_page {
 
         $search = optional_param('searchtext', '', PARAM_RAW);
 
-        $available_users = $this->get_available_users($search);
+        $available_users = $this->get_available_users(
+            array_keys($selected_users), $search
+        );
         $available_select = html_writer::select(
             $available_users, 'available_users[]', '', '',
             array('class' => 'main_selector', 'multiple' => '', 'size' => 15)
@@ -184,10 +186,12 @@ abstract class student_mentor_admin_page {
         $confirmed = confirm_sesskey($data->sesskey);
 
         if ($confirmed) {
-            foreach ($data->available_users as $userid) {
-                if (isset($data->add)) {
+            if (isset($data->add) and $data->available_users) {
+                foreach ($data->available_users as $userid) {
                     $this->perform_add($userid);
-                } else if (isset($data->remove)) {
+                }
+            } else if (isset($data->remove) and $data->selected_users) {
+                foreach ($data->selected_users as $userid) {
                     $this->perform_remove($userid);
                 }
             }
@@ -195,7 +199,7 @@ abstract class student_mentor_admin_page {
     }
 
     // TODO: exclude already selected users?
-    public function get_available_users($search) {
+    public function get_available_users($selectedids, $search) {
         global $DB;
 
         // Only show users after query
@@ -211,6 +215,10 @@ abstract class student_mentor_admin_page {
         $sql = "SELECT * FROM {user}
             WHERE deleted = 0 AND ($fullname_like OR $email_like)";
 
+        if (!empty($selectedids)) {
+            $sql .= ' AND id NOT IN (' . implode(',', $selectedids) . ')';
+        }
+
         $params = array('fullname' => "%$search%", 'email' => "%$search%");
 
         $users = $DB->get_records_sql($sql, $params, 0, 100);
@@ -224,12 +232,13 @@ abstract class student_mentor_admin_page {
 
         $selected = $class::get_all(ues::where()->path->equal($this->path));
 
-        $to_named = function($assignment) {
-            $user = $assignment->user();
-            return fullname($user). " ($user->email)";
-        };
+        $rtn = array();
+        foreach ($selected as $assign) {
+            $user = $assign->user();
+            $rtn[$assign->userid] = fullname($user) . " ($user->email)";
+        }
 
-        return array_map($to_named, $selected);
+        return $rtn;
     }
 
     public static function gather_files() {
@@ -281,6 +290,7 @@ abstract class student_mentor_role_assign extends student_mentor_admin_page {
         $context = $this->get_context();
         $roleid = $this->check_role();
         $component = $this->component;
+        $class = $this->type;
 
         $params = array('userid' => $userid);
         $total_assigns = (

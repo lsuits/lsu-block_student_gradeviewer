@@ -36,6 +36,7 @@ $PAGE->set_context($context);
 $PAGE->set_url($base_url);
 $PAGE->set_title("$blockname: $heading");
 $PAGE->set_heading("$blockname: $heading");
+$PAGE->set_pagetype('mentor-administration');
 $PAGE->navbar->add($SITE->shortname);
 $PAGE->navbar->add($blockname);
 $PAGE->navbar->add($heading);
