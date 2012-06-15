@@ -5,6 +5,15 @@ $string['pluginname'] = 'Student Grade Viewer';
 $string['viewgrades'] = 'Mentees';
 $string['admin'] = 'Administration';
 
+// Event Strings
+$string['athletic'] = 'Athletic';
+$string['specified_sport'] = 'Sport';
+$string['user_reg_status'] = 'Registration';
+$string['user_year'] = 'Year';
+$string['user_college'] = 'College';
+$string['user_major'] = 'Major';
+$string['user_keypadid'] = 'Keypad ID';
+
 // Error strings
 $string['no_permission'] = 'You do not have the correct permission to view this page. If you think that you should, please contact the Moodle administrator.';
 

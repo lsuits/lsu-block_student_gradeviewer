@@ -73,14 +73,29 @@ class sports_mentor extends mentor_base {
         return $this->path;
     }
 
-    public static function all_sports() {
-        global $DB;
+    public static function menu($filters = array()) {
+        $mentors = self::get_all($filters);
 
+        $rtn = array();
+        foreach ($mentors as $mentor) {
+            $rtn[$mentor->path] = $mentor->path;
+        }
+
+        return $rtn;
+    }
+
+    public static function meta() {
         $meta_names = ues_user::get_meta_names();
 
         $only_sports = function($name) {
             return preg_match('/sport/', $name);
         };
+
+        return array_filter($meta_names, $only_sports);
+    }
+
+    public static function all_sports() {
+        global $DB;
 
         $flatten = function($in, $name) use ($DB) {
             $sql = 'SELECT id, value
@@ -91,7 +106,7 @@ class sports_mentor extends mentor_base {
             return array_merge($in, array_values($sports));
         };
 
-        $rtn = array_reduce(array_filter($meta_names, $only_sports), $flatten, array());
+        $rtn = array_reduce(self::meta(), $flatten, array());
         if (empty($rtn)) {
             return array();
         } else {
