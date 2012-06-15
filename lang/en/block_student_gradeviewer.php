@@ -7,6 +7,7 @@ $string['admin'] = 'Administration';
 
 // Event Strings
 $string['athletic'] = 'Athletic';
+$string['username'] = 'Username';
 $string['specified_sport'] = 'Sport';
 $string['user_reg_status'] = 'Registration';
 $string['user_year'] = 'Year';

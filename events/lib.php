@@ -24,20 +24,38 @@ class student_sports_gradeviewer implements supported_meta {
 }
 
 class sports_grade_dropdown extends meta_data_ui_element {
+    public function __construct($name) {
+        $this->meta = sports_mentor::meta();
+        parent::__construct('specified_sport', $name);
+    }
+
+    public function format($user) {
+        $sports = array();
+        foreach ($this->meta as $name) {
+            if (empty($user->$name)) {
+                continue;
+            }
+
+            $sports[] = $user->$name;
+        }
+
+        return implode(', ', $sports);
+    }
+
     public function sql($dsl) {
         $value = $this->value();
 
-        $sport_meta = sports_mentor::meta();
+        if (empty($value)) {
+            return $dsl;
+        }
 
-        $transform = function($meta) use ($value) {
-            return ues::where($meta)->equal($value)->sql();
-        };
+        $filters = ues::where()->value->equal($value)->name->in($this->meta);
 
-        $in = implode(' OR ', array_map($transform, $sport_meta));
+        $sub_select =
+            'SELECT userid FROM {' . ues_user::metatablename() . '}' .
+            ' WHERE ' . $filters->sql();
 
-        $sub_select = 'SELECT userid FROM {enrol_ues_usermeta} WHERE ('. $in . ')';
-
-        return $dsl->in->raw('IN (' . $sub_select . ')');
+        return $dsl->join("($sub_select)", 'sports')->on('id', 'userid');
     }
 
     public function html() {
@@ -50,7 +68,7 @@ class sports_grade_dropdown extends meta_data_ui_element {
     }
 
     public function gather_specified_sports() {
-        $sports = array('' => get_string('all'));
+        $sports = array('' => get_string('any'));
 
         $context = get_context_instance(CONTEXT_SYSTEM);
         if (has_capability('block/student_gradeviewer:sportsadmin', $context)) {
@@ -115,7 +133,7 @@ abstract class student_gradeviewer_handlers {
         );
 
         $data->keys = array_filter($data->keys, function($key) use ($keep) {
-            return !in_array($key, $keep);
+            return in_array($key, $keep);
         });
 
         $data->keys[] = 'specified_sport';
