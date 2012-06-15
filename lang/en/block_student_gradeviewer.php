@@ -2,12 +2,17 @@
 
 // General block strings
 $string['pluginname'] = 'Student Grade Viewer';
-$string['viewgrades'] = 'Mentees';
 $string['admin'] = 'Administration';
+
+// View grades
+$string['viewgrades'] = 'Grades Overview for {$a}';
 
 // Event Strings
 $string['athletic'] = 'Athletic';
 $string['username'] = 'Username';
+$string['idnumber'] = 'ID number';
+$string['firstname'] = 'First name';
+$string['lastname'] = 'Surname';
 $string['specified_sport'] = 'Sport';
 $string['user_reg_status'] = 'Registration';
 $string['user_year'] = 'Year';

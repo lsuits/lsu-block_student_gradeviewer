@@ -26,6 +26,8 @@ class student_sports_gradeviewer implements supported_meta {
 class sports_grade_dropdown extends meta_data_ui_element {
     public function __construct($name) {
         $this->meta = sports_mentor::meta();
+        $this->context = get_context_instance(CONTEXT_SYSTEM);
+        $this->sports = $this->gather_specified_sports();
         parent::__construct('specified_sport', $name);
     }
 
@@ -42,26 +44,44 @@ class sports_grade_dropdown extends meta_data_ui_element {
         return implode(', ', $sports);
     }
 
+    public function sub($filters) {
+        return 'SELECT userid FROM {' . ues_user::metatablename() . '} WHERE ' .
+            $filters->sql();
+    }
+
     public function sql($dsl) {
         $value = $this->value();
 
+        // Tried to spoof it
+        if (!isset($this->sports[$value])) {
+            $value = null;
+        }
+
         if (empty($value)) {
-            return $dsl;
+            if (has_capability('block/student_gradeviewer:sportsadmin', $this->context)) {
+                return $dsl->user_sport1->not_equal('');
+            } else {
+                global $USER;
+
+                $sports = sports_mentor::menu(array('userid' => $USER->id));
+                $sub = $this->sub(ues::where()
+                    ->value->in(array_keys($sports))
+                    ->name->in($this->meta));
+
+                return $dsl->join("($sub)", 'sports')->on('id', 'userid');
+            }
         }
 
         $filters = ues::where()->value->equal($value)->name->in($this->meta);
-
-        $sub_select =
-            'SELECT userid FROM {' . ues_user::metatablename() . '}' .
-            ' WHERE ' . $filters->sql();
+        $sub_select = $this->sub($filters);
 
         return $dsl->join("($sub_select)", 'sports')->on('id', 'userid');
     }
 
     public function html() {
-        $sports = $this->gather_specified_sports();
         $select = html_writer::select(
-            $sports, 'specified_sport', $this->value(), array()
+            $this->sports, 'specified_sport',
+            $this->value(), array()
         );
 
         return $select;
@@ -70,13 +90,12 @@ class sports_grade_dropdown extends meta_data_ui_element {
     public function gather_specified_sports() {
         $sports = array('' => get_string('any'));
 
-        $context = get_context_instance(CONTEXT_SYSTEM);
-        if (has_capability('block/student_gradeviewer:sportsadmin', $context)) {
+        if (has_capability('block/student_gradeviewer:sportsadmin', $this->context)) {
             $sports += sports_mentor::all_sports();
         } else {
             global $USER;
 
-            $sports += sports_mentor::menu(ues::where('userid')->equal($USER->id));
+            $sports += sports_mentor::menu(array('userid' => $USER->id));
         }
 
         return $sports;
@@ -87,7 +106,7 @@ class sports_grade_meta_text extends meta_data_text_box {
     public function format($user) {
         switch ($this->key()) {
         case 'username':
-            $base = 'blocks/student_gradeviewer/viewgrades/php';
+            $base = '/blocks/student_gradeviewer/viewgrades.php';
             $url = new moodle_url($base, array('id' => $user->id));
             return html_writer::link($url, $user->username);
         case 'user_reg_status':
@@ -125,6 +144,9 @@ abstract class student_gradeviewer_handlers {
         // TODO: re-evaluate important fields... do they need FERPA?
         $keep = array(
             'username',
+            'idnumber',
+            'firstname',
+            'lastname',
             'user_reg_status',
             'user_year',
             'user_college',
