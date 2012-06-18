@@ -22,6 +22,7 @@ $string['user_keypadid'] = 'Keypad ID';
 
 // Error strings
 $string['no_permission'] = 'You do not have the correct permission to view this page. If you think that you should, please contact the Moodle administrator.';
+$string['no_courses'] = '{$a} is not enrolled in any courses.';
 
 // Administration strings
 $string['admin_person_mentor'] = 'Assign Students to Mentors';
