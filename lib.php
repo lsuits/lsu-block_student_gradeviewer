@@ -15,7 +15,7 @@ abstract class student_gradeviewer {
                 return "$name -";
             }
 
-            $course_item->get_grade($userid);
+            $grade = $course_item->get_grade($userid);
             if (empty($grade->id)) {
                 $grade->finalgrade = null;
             }
@@ -38,11 +38,16 @@ abstract class student_gradeviewer {
         $sql = 'SELECT COUNT(DISTINCT(g.userid))
             FROM {grade_grades} g
             WHERE g.itemid = :itemid
+              AND g.finalgrade IS NOT NULL
+              AND g.finalgrade > :final
               AND g.userid IN (' . implode(',', $ids) . ')';
 
-        $params = array('itemid' => $grade->grade_item->id);
+        $params = array(
+            'itemid' => $grade->grade_item->id,
+            'final' => $grade->finalgrade
+        );
 
-        $rank = $DB->count_records_sql($sql, $params);
+        $rank = $DB->count_records_sql($sql, $params) + 1;
 
         return "$rank/$count";
     }

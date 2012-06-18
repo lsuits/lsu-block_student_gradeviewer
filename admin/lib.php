@@ -65,11 +65,12 @@ abstract class student_mentor_admin_page {
         return $this->roleid;
     }
 
+    public function message_params($userid) {
+        return array('userid' => $userid, 'path' => $this->path);
+    }
+
     public function perform_add($userid) {
-        $params = array(
-            'userid' => $userid,
-            'path' => $this->path
-        );
+        $params = $this->message_params($userid);
 
         $class = $this->type;
 
@@ -84,12 +85,10 @@ abstract class student_mentor_admin_page {
     }
 
     public function perform_remove($userid) {
-        $params = array(
-            'userid' => $userid,
-            'path' => $this->path
-        );
+        $params = $this->message_params($userid);
 
         $class = $this->type;
+
         if (class_exists($class) and $assign = $class::get($params)) {
             $class::delete($assign->id);
         }

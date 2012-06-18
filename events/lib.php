@@ -72,7 +72,10 @@ class sports_grade_dropdown extends meta_data_ui_element {
                     ->value->in($sports)->name->in($this->meta));
 
                 if (!empty($people)) {
-                    $dsl->id->in($people);
+                    $person_select = 'SELECT id AS userid FROM {user} WHERE ';
+                    $person_select .= ues::where()->id->in($people)->sql();
+
+                    $sport_sub = "($sport_sub) UNION ($person_select)";
                 }
 
                 return $dsl->join("($sport_sub)", 'sports')->on('id', 'userid');
@@ -103,6 +106,7 @@ class sports_grade_dropdown extends meta_data_ui_element {
             global $USER;
 
             $sports += sports_mentor::menu(array('userid' => $USER->id));
+            unset($sports['NA']);
         }
 
         return $sports;

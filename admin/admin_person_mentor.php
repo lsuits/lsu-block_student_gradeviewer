@@ -64,6 +64,24 @@ class admin_person_mentor extends student_mentor_admin_page {
         return $html;
     }
 
+    public function message_params($userid) {
+        return array('userid' => $this->path, 'path' => $userid);
+    }
+
+    public function get_selected_users() {
+        $filters = ues::where()->userid->equal($this->path);
+
+        $selected = person_mentor::get_all($filters);
+
+        $rtn = array();
+        foreach ($selected as $assign) {
+            $user = $assign->derive_path();
+            $rtn[$assign->path] = fullname($user) . " ($user->email)";
+        }
+
+        return $rtn;
+    }
+
     public function user_form() {
         global $OUTPUT;
 
