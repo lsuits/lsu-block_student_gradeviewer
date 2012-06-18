@@ -63,12 +63,19 @@ class sports_grade_dropdown extends meta_data_ui_element {
             } else {
                 global $USER;
 
-                $sports = sports_mentor::menu(array('userid' => $USER->id));
-                $sub = $this->sub(ues::where()
-                    ->value->in(array_keys($sports))
-                    ->name->in($this->meta));
+                $params = array('userid' => $USER->id);
 
-                return $dsl->join("($sub)", 'sports')->on('id', 'userid');
+                $sports = sports_mentor::menu($params);
+                $people = person_mentor::menu($params);
+
+                $sport_sub = $this->sub(ues::where()
+                    ->value->in($sports)->name->in($this->meta));
+
+                if (!empty($people)) {
+                    $dsl->id->in($people);
+                }
+
+                return $dsl->join("($sport_sub)", 'sports')->on('id', 'userid');
             }
         }
 

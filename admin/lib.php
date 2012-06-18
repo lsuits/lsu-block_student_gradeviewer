@@ -30,7 +30,7 @@ abstract class student_mentor_admin_page {
     }
 
     public function can_use() {
-        $c = get_context_instance(CONTEXT_SYSTEM);
+        $c = $this->get_context();
 
         return array_reduce($this->capabilities, function($in, $cap) use ($c) {
             return $in || has_capability($cap, $c);
@@ -198,7 +198,6 @@ abstract class student_mentor_admin_page {
         }
     }
 
-    // TODO: exclude already selected users?
     public function get_available_users($selectedids, $search) {
         global $DB;
 

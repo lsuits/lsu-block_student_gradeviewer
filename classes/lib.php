@@ -17,6 +17,19 @@ abstract class mentor_base extends ues_external {
         return $this->user;
     }
 
+    public static function menu($filters = array()) {
+        $class = get_called_class();
+
+        $mentors = $class::get_all($filters);
+
+        $rtn = array();
+        foreach ($mentors as $mentor) {
+            $rtn[$mentor->path] = $mentor->path;
+        }
+
+        return $rtn;
+    }
+
     abstract public function derive_path();
 }
 
@@ -71,17 +84,6 @@ class person_mentor extends mentor_base {
 class sports_mentor extends mentor_base {
     public function derive_path() {
         return $this->path;
-    }
-
-    public static function menu($filters = array()) {
-        $mentors = self::get_all($filters);
-
-        $rtn = array();
-        foreach ($mentors as $mentor) {
-            $rtn[$mentor->path] = $mentor->path;
-        }
-
-        return $rtn;
     }
 
     public static function meta() {
