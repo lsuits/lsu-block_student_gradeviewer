@@ -6,6 +6,13 @@ $string['admin'] = 'Administration';
 
 // View grades
 $string['viewgrades'] = 'Grades Overview for {$a}';
+$string['viewgrades_help'] = 'If the student is enrolled in any courses, the
+list of the courses will show up below. The current final grade for each
+course is located to the right of the course name. If the grade appears as "-",
+then there is currently no grade available for the course.
+
+Each course can be clicked on to get an in-depth look at the course gradebook
+and how the student ranks in the class.';
 
 // Event Strings
 $string['athletic'] = 'Athletic';

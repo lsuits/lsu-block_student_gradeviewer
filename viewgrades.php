@@ -18,11 +18,6 @@ $mentor = (
     has_capability('block/student_gradeviewer:viewgrades', $context)
 );
 
-$admin = (
-    has_capability('block/student_gradeviewer:sportsadmin', $context) or
-    has_capability('block/student_gradeviewer:academicadmin', $context)
-);
-
 if (!$mentor) {
     print_error('no_permission', 'block_student_gradeviewer');
 }
@@ -44,7 +39,9 @@ $PAGE->set_title($_s('viewgrades', $student));
 $PAGE->set_heading("$blockname: $student");
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading($_s('viewgrades', $student));
+echo $OUTPUT->heading_with_help(
+    $_s('viewgrades', $student), 'viewgrades', 'block_student_gradeviewer'
+);
 
 $_i = function($key) { return get_string($key, 'grades'); };
 
@@ -56,11 +53,25 @@ if (empty($courses)) {
     exit();
 }
 
-$by_name = function($course) { return $course->fullname; };
-$options = array_map($by_name, $courses);
+$options = array_map(student_gradeviewer::grade_gen($id), $courses);
 $courseid = empty($courseid) ? key($courses) : $courseid;
 
-echo $OUTPUT->single_select($base_url, 'courseid', $options, $courseid, null);
+echo $OUTPUT->box_start();
+echo html_writer::start_tag('ul', array('class' => 'course-grades'));
+foreach ($options as $cid => $display) {
+    $url = new moodle_url($base_url, array('courseid' => $cid));
+    $link = html_writer::link($url, $display);
+    $params = array('class' => 'graded-course');
+
+    if ($cid == $courseid) {
+        $params['class'] .= ' selected';
+        $link = html_writer::tag('strong', $link);
+    }
+
+    echo html_writer::tag('li', $link, $params);
+}
+echo html_writer::end_tag('ul');
+echo $OUTPUT->box_end();
 
 $course = $courses[$courseid];
 
@@ -73,9 +84,10 @@ grade_regrade_final_grades($course->id);
 $table = new html_table();
 
 $table->head = array(
-    $_i('itemname'), $_i('category'), $_i('overridden'),
-    $_i('excluded'), $_i('range'), $_i('rank'),
-    $_i('feedback'), $_i('finalgrade')
+    $_i('itemname'), $_i('category'),
+    $_i('overridden') . $OUTPUT->help_icon('overridden', 'grades'),
+    $_i('excluded') . $OUTPUT->help_icon('excluded', 'grades'),
+    $_i('range'), $_i('rank'), $_i('feedback'), $_i('finalgrade')
 );
 
 $tree = new grade_tree($course->id, true, true, null, !$CFG->enableoutcomes);
@@ -113,6 +125,7 @@ foreach ($tree->get_items() as $item) {
     $table->data[] = $line;
 }
 
-echo html_writer::table($table);
+$params = array('class' => 'table-output');
+echo html_writer::tag('div', html_writer::table($table), $params);
 
 echo $OUTPUT->footer();
