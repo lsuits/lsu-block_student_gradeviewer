@@ -1,7 +1,7 @@
 <?php
 
 // General block strings
-$string['pluginname'] = 'Student Grade Viewer';
+$string['pluginname'] = 'Mentor Assignment';
 $string['admin'] = 'Administration';
 
 // View grades
