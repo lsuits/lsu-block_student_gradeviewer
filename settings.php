@@ -6,8 +6,8 @@ if ($ADMIN->fulltree) {
     $roles = $DB->get_records_menu('role', null, 'sortorder ASC', 'id, name');
 
     $internal_roles = array(
-        'academics_mentor', 'sports_mentor',
-        'academics_admin', 'sports_admin'
+        'academic_mentor', 'sports_mentor',
+        'academic_admin', 'sports_admin'
     );
 
     $settings->add(new admin_setting_heading('role_heading', '',

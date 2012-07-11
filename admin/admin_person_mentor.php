@@ -13,7 +13,7 @@ class admin_person_mentor extends student_mentor_admin_page {
         }
 
         if (has_capability($this->capabilities[1], $this->get_context())) {
-            $this->parents[] = 'academics_mentor';
+            $this->parents[] = 'academic_mentor';
         }
     }
 

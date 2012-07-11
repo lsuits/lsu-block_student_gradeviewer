@@ -51,14 +51,14 @@ $string['admin_mentor'] = 'Mentor Assignment';
 $string['role'] = 'Role assignment';
 $string['role_help'] = 'Below are configured role mappings used by the Student Grade Viewer when assigning mentors to their respective areas of concern.';
 
-$string['academics_mentor'] = 'Academic Mentor';
-$string['academics_mentor_help'] = 'Academic mentors focus on course departments and mentor the students within.';
+$string['academic_mentor'] = 'Academic Mentor';
+$string['academic_mentor_help'] = 'Academic mentors focus on course departments and mentor the students within.';
 
 $string['sports_mentor'] = 'Athletic Mentor';
 $string['sports_mentor_help'] = 'Athletic mentors focus on students in sports or inidividuals.';
 
-$string['academics_admin'] = 'Academic Administrator';
-$string['academics_admin_help'] = 'Academic administrators assign users to be Academic mentors';
+$string['academic_admin'] = 'Academic Administrator';
+$string['academic_admin_help'] = 'Academic administrators assign users to be Academic mentors';
 
 $string['sports_admin'] = 'Athletic Administrator';
 $string['sports_admin_help'] = 'Athletic administrators assign users to be Athletic mentors to sport categories or student athletes';
