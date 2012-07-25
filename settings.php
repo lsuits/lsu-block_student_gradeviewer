@@ -19,7 +19,7 @@ if ($ADMIN->fulltree) {
             'block_student_gradeviewer/' . $internal_role,
             get_string($internal_role, 'block_student_gradeviewer'),
             get_string($internal_role . '_help', 'block_student_gradeviewer'),
-            reset(array_keys($roles)), $roles
+            key($roles), $roles
         ));
     }
 }
