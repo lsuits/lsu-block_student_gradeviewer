@@ -3,7 +3,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    $roles = $DB->get_records_menu('role', null, 'sortorder ASC', 'id, name');
+
+    $roles = role_get_names(null,null,true);
 
     $internal_roles = array(
         'academic_mentor', 'sports_mentor',
