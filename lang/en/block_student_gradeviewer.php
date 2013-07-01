@@ -68,3 +68,5 @@ $string['student_gradeviewer:viewgrades'] = 'Allows users to use the Student Gra
 $string['student_gradeviewer:sportsgrades'] = 'Allows users to use the Student Grade Viewer for athletes';
 $string['student_gradeviewer:academicadmin'] = 'Allows users to add mentors in academic categories';
 $string['student_gradeviewer:sportsadmin'] = 'Allows users to add mentors in sports categories';
+$string['student_gradeviewer:myaddinstance'] = 'Add Student Gradeviewer to My Page';
+$string['student_gradeviewer:addinstance'] = 'Add Student Gradeviewer to My Page';
