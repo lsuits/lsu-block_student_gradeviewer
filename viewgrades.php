@@ -11,7 +11,7 @@ $courseid = optional_param('courseid', null, PARAM_INT);
 
 $user = $DB->get_record('user', array('id' => $id), '*', MUST_EXIST);
 
-$context = get_context_instance(CONTEXT_SYSTEM);
+$context = context_system::instance();
 
 $mentor = (
     has_capability('block/student_gradeviewer:sportsgrades', $context) or
@@ -92,7 +92,7 @@ $table->head = array(
 
 $tree = new grade_tree($course->id, true, true, null, !$CFG->enableoutcomes);
 
-$context = get_context_instance(CONTEXT_COURSE, $course->id);
+$context = context_course::instance($course->id);
 $total_users = get_role_users($graded, $context);
 
 foreach ($tree->get_items() as $item) {

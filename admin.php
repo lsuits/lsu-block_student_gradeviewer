@@ -7,7 +7,7 @@ require_login();
 
 $admin_type = optional_param('type', 'person_mentor', PARAM_TEXT);
 
-$context = get_context_instance(CONTEXT_SYSTEM);
+$context = context_system::instance();
 
 $admin = (
     has_capability('block/student_gradeviewer:sportsadmin', $context) or
