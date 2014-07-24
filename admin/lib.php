@@ -39,7 +39,7 @@ abstract class student_mentor_admin_page {
 
     public function get_context() {
         if (empty($this->context)) {
-            $this->context = get_context_instance(CONTEXT_SYSTEM);
+            $this->context = context_system::instance();
         }
 
         return $this->context;

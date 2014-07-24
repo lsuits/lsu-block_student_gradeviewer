@@ -29,7 +29,7 @@ class block_student_gradeviewer extends block_list {
         $content->icons = array();
         $content->footer = '';
 
-        $context = get_context_instance(CONTEXT_SYSTEM);
+        $context = context_system::instance();
 
         $admin = (
             has_capability('block/student_gradeviewer:academicadmin', $context) or

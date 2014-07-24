@@ -14,7 +14,7 @@ class student_sports_gradeviewer implements supported_meta {
     }
 
     public function can_use() {
-        $ctxt = get_context_instance(CONTEXT_SYSTEM);
+        $ctxt = context_system::instance();
         return has_capability('block/student_gradeviewer:sportsgrades', $ctxt);
     }
 
@@ -26,7 +26,7 @@ class student_sports_gradeviewer implements supported_meta {
 class sports_grade_dropdown extends meta_data_ui_element {
     public function __construct($name) {
         $this->meta = sports_mentor::meta();
-        $this->context = get_context_instance(CONTEXT_SYSTEM);
+        $this->context = context_system::instance();
         $this->sports = $this->gather_specified_sports();
         parent::__construct('specified_sport', $name);
     }
