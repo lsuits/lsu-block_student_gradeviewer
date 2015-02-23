@@ -148,7 +148,7 @@ abstract class student_gradeviewer_handlers {
         $data->types['sports_grade'] = new student_sports_gradeviewer();
 
         // TODO: academic link
-        return true;
+        return $data;
     }
 
     public static function sports_grade_data_ui_keys($data) {
