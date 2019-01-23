@@ -1,8 +1,8 @@
 <?php
 
 require_once '../../config.php';
-require_once 'lib.php';
-require_once $CFG->dirroot . '/grade/lib.php';
+require_once($CFG->dirroot . '/blocks/student_gradeviewer/lib.php');
+require_once($CFG->dirroot . '/grade/lib.php');
 
 require_login();
 
@@ -87,13 +87,17 @@ $table->head = array(
     $_i('itemname'), $_i('category'),
     $_i('overridden') . $OUTPUT->help_icon('overridden', 'grades'),
     $_i('excluded') . $OUTPUT->help_icon('excluded', 'grades'),
-    $_i('range'), $_i('rank'), $_i('feedback'), $_i('finalgrade')
+    $_i('range'), $_i('rank'), $_i('feedback'), $_i('finalgrade') . ' / ' . $_i('grademax')
 );
 
 $tree = new grade_tree($course->id, true, true, null, !$CFG->enableoutcomes);
 
 $context = context_course::instance($course->id);
-$total_users = get_role_users($graded, $context);
+
+// In case there is more than one role, grab a user that is graded.
+foreach ($graded as $gradedrole) {
+  $total_users = get_role_users($gradedrole, $context);
+}
 
 foreach ($tree->get_items() as $item) {
     $line = array();
@@ -120,8 +124,16 @@ foreach ($tree->get_items() as $item) {
         format_float($item->grademax, $decimals);
     $line[] = student_gradeviewer::rank($context, $grade, $total_users);
     $line[] = format_text($grade->feedback, $grade->feedbackformat);
-    $line[] = grade_format_gradevalue($grade->finalgrade, $item);
-
+    if ($item->itemtype == 'course') {
+        echo('<br />Course id: ' . $course->id . '<br />');
+        echo('<br />User id: ' . $user->id . '<br />');
+        echo('<br />Grade item: '); var_dump($item); echo'<br />';
+        $finalsggrade = sg_get_grade_for_course($course->id, $user->id, $item, $grade);
+	echo('<br />Final SG grade: ' . $finalsggrade . '<br />');
+        $line[] = is_numeric($finalsggrade) ? grade_format_gradevalue(sg_get_grade_for_course($course->id, $user->id), $item) : grade_format_gradevalue($grade->finalgrade, $item);
+    } else { 
+        $line[] = grade_format_gradevalue($grade->finalgrade, $item) . ' / ' . grade_format_gradevalue($item->grademax, $item);
+    }
     $table->data[] = $line;
 }
 
