@@ -2,6 +2,7 @@
 
 require_once '../../config.php';
 require_once($CFG->dirroot . '/blocks/student_gradeviewer/lib.php');
+require_once($CFG->dirroot . '/blocks/student_gradeviewer/classes/total_grade.php');
 require_once($CFG->dirroot . '/grade/lib.php');
 
 require_login();
@@ -87,6 +88,7 @@ $table->head = array(
     $_i('itemname'), $_i('category'),
     $_i('overridden') . $OUTPUT->help_icon('overridden', 'grades'),
     $_i('excluded') . $OUTPUT->help_icon('excluded', 'grades'),
+    $_i('hidden') . $OUTPUT->help_icon('hidden', 'grades'),
     $_i('range'), $_i('rank'), $_i('feedback'), $_i('finalgrade') . ' / ' . $_i('grademax')
 );
 
@@ -120,17 +122,14 @@ foreach ($tree->get_items() as $item) {
     $line[] = $parent->get_name();
     $line[] = $grade->is_overridden() ? 'Y' : 'N';
     $line[] = $grade->is_excluded() ? 'Y' : 'N';
+    $line[] = $item->is_hidden() ? 'Y' : 'N';
     $line[] = format_float($item->grademin, $decimals) . ' - ' .
         format_float($item->grademax, $decimals);
     $line[] = student_gradeviewer::rank($context, $grade, $total_users);
     $line[] = format_text($grade->feedback, $grade->feedbackformat);
     if ($item->itemtype == 'course') {
-        echo('<br />Course id: ' . $course->id . '<br />');
-        echo('<br />User id: ' . $user->id . '<br />');
-        echo('<br />Grade item: '); var_dump($item); echo'<br />';
-        $finalsggrade = sg_get_grade_for_course($course->id, $user->id, $item, $grade);
-	echo('<br />Final SG grade: ' . $finalsggrade . '<br />');
-        $line[] = is_numeric($finalsggrade) ? grade_format_gradevalue(sg_get_grade_for_course($course->id, $user->id), $item) : grade_format_gradevalue($grade->finalgrade, $item);
+        $finalsggrade = sg_get_grade_for_course($course->id, $user->id);
+        $line[] = $finalsggrade[0] ? $finalsggrade[0] . ' / ' . $finalsggrade[1] : grade_format_gradevalue($grade->finalgrade, $item) . ' / ' . grade_format_gradevalue($item->grademax, $item);
     } else { 
         $line[] = grade_format_gradevalue($grade->finalgrade, $item) . ' / ' . grade_format_gradevalue($item->grademax, $item);
     }
