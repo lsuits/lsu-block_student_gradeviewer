@@ -18,8 +18,8 @@
 /**
  *
  * @package    block_student_gradeviewer
- * @copyright  2014 Louisiana State University
- * @copyright  2014 Philip Cali, Jason Peak, Robert Russo
+ * @copyright  2008 Onwards - Louisiana State University
+ * @copyright  2008 Onwards - Philip Cali, Jason Peak, Robert Russo
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
