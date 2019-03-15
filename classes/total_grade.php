@@ -21,13 +21,15 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once($CFG->libdir . '/grade/grade_item.php');
 require_once($CFG->libdir . '/grade/grade_grade.php');
 require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->dirroot . '/grade/report/lib.php');
 
-// Class to get grade report functions and variables from parent class in grade/report/lib.php
-// copied from quickedit
+// Class to get grade report functions and variables from parent class in grade/report/lib.php.
+// This insanity was copied from LSU's Quick Edit.
 
 class grade_report_student_gradeviewer extends grade_report {
 
@@ -38,15 +40,16 @@ class grade_report_student_gradeviewer extends grade_report {
     public $user;
 
     /**
-     * The user's courses
+     * The user's courses.
      * @var array $courses
      */
     public $courses;
 
     /**
-     * show course/category totals if they contain hidden items
+     * Show course/category totals if they contain hidden items
+     * @var bool $showtotalsifcontainhidden
      */
-    var $showtotalsifcontainhidden;
+    public $showtotalsifcontainhidden;
 
     /**
      * An array of course ids that the user is a student in.
@@ -70,65 +73,77 @@ class grade_report_student_gradeviewer extends grade_report {
         global $CFG, $DB;
         parent::__construct($courseid, null, $context);
 
-        // Get the user (for later use in grade/report/lib.php)
-	$user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
+        // Get the user (for later use in grade/report/lib.php).
+        $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
         $this->user = $user;
 
-        // Create an array (for later use in grade/report/lib.php)
+        // Create an array (for later use in grade/report/lib.php).
         $this->showtotalsifcontainhidden = array();
 
-        // Sanity check
+        // Sanity check.
         if ($courseid) {
-            // Populate this (for later use in grade/report/lib.php)
-            $this->showtotalsifcontainhidden[$courseid] = grade_get_setting($courseid, 'report_overview_showtotalsifcontainhidden', $CFG->grade_report_overview_showtotalsifcontainhidden);
+            // Populate this (for later use in grade/report/lib.php).
+            $this->showtotalsifcontainhidden[$courseid] = grade_get_setting(
+                $courseid, 'report_overview_showtotalsifcontainhidden', $CFG->grade_report_overview_showtotalsifcontainhidden
+            );
         }
     }
 
-    function process_action($target, $action) {
+    public function process_action($target, $action) {
     }
 
-    function process_data($data) {
+    public function process_data($data) {
         return $this->screen->process($data);
     }
 
-    function get_blank_hidden_total_and_adjust_bounds($courseid, $course_total_item, $finalgrade){
-
-        return($this->blank_hidden_total_and_adjust_bounds($courseid, $course_total_item, $finalgrade));
+    public function get_blank_hidden_total_and_adjust_bounds($courseid, $coursetotalitem, $finalgrade) {
+        return($this->blank_hidden_total_and_adjust_bounds($courseid, $coursetotalitem, $finalgrade));
     }
 }
 
 
+/*
+ * If a course has no course grade item (no grades at all) the system returns '-'.
+ * If a user has no course grade, the system returns '-'.
+ * If a user has grades and the instructor allows those grades to be viewed,
+ * the system returns the final grade as stored in the database.
+ * If a user has grades and the instructor has hidden the course grade item,
+ * the system returns the string 'hidden'.
+ * If a user has grades and the instructor has hidden some of the users grades
+ * AND those hidden items impact the course grade based on the instructor's settings,
+ * the system recalculates the course grade appropriately.
 
-// Returns the formatted course total item value give a userid and a course id
-// If a course has no course grade item (no grades at all) the system returns '-'
-// If a user has no course grade, the system returns '-'
-// If a user has grades and the instructor allows those grades to be viewed, the system returns the final grade as stored in the database
-// If a user has grades and the instructor has hidden the course grade item, the system returns the string 'hidden'
-// If a user has grades and the instructor has hidden some of the users grades and those hidden items impact the course grade based on the instructor's settings, the system recalculates the course grade appropriately
+ * @return string - The formatted course total item value give a userid and a course id.
+ */
+
 function sg_get_grade_for_course($courseid, $userid) {
-    $course_total_item = grade_item::fetch_course_item($courseid);
-    $course_context = context_course::instance($courseid);
-    $canviewhidden = has_capability('moodle/grade:viewhidden', $course_context, $userid);
-    $report = new grade_report_student_gradeviewer($userid, $courseid, null, $course_context);
-    if (!$course_total_item) {
+    $coursetotalitem = grade_item::fetch_course_item($courseid);
+    $coursecontext = context_course::instance($courseid);
+    $canviewhidden = has_capability('moodle/grade:viewhidden', $coursecontext, $userid);
+    $report = new grade_report_student_gradeviewer($userid, $courseid, null, $coursecontext);
+    if (!$coursetotalitem) {
         $totalgrade = '-';
     }
-    $grade_grade_params = array(
-        'itemid' => $course_total_item->id,
+
+    $gradegradeparams = array(
+        'itemid' => $coursetotalitem->id,
         'userid' => $userid
     );
-    $user_grade_grade = new grade_grade($grade_grade_params);
-    $user_grade_grade->grade_item =& $course_total_item;
 
-    $finalgrade = $user_grade_grade->finalgrade;
+    $usergradegrade = new grade_grade($gradegradeparams);
+    $usergradegrade->grade_item =& $coursetotalitem;
+
+    $finalgrade = $usergradegrade->finalgrade;
+
     if (!$canviewhidden and !is_null($finalgrade)) {
         $adjustedgrade = $report->get_blank_hidden_total_and_adjust_bounds($courseid,
-                                                                           $course_total_item,
+                                                                           $coursetotalitem,
                                                                            $finalgrade);
+
         // We temporarily adjust the view of this grade item - because the min and
         // max are affected by the hidden values in the aggregation.
-        $course_total_item->grademax = $adjustedgrade['grademax'];
-        $course_total_item->grademin = $adjustedgrade['grademin'];
+        $coursetotalitem->grademax = $adjustedgrade['grademax'];
+        $coursetotalitem->grademin = $adjustedgrade['grademin'];
     } else if (!is_null($finalgrade)) {
         // Because the purpose of this block is to show MY grades as calculated for output
         // we make sure we adhere to how hiding grades impacts the total grade regardless
@@ -137,21 +152,21 @@ function sg_get_grade_for_course($courseid, $userid) {
         // priveleged person and taking courses.
         // In any case, it's best to calculate grades how the instructor specifies.
         $adjustedgrade = $report->get_blank_hidden_total_and_adjust_bounds($courseid,
-                                                                           $course_total_item,
+                                                                           $coursetotalitem,
                                                                            $finalgrade);
         // We must use the specific max/min because it can be different for
         // each grade_grade when items are excluded from sum of grades.
-        $course_total_item->grademin = $user_grade_grade->get_grade_min();
-        $course_total_item->grademax = $user_grade_grade->get_grade_max();
+        $coursetotalitem->grademin = $usergradegrade->get_grade_min();
+        $coursetotalitem->grademax = $usergradegrade->get_grade_max();
     }
     if (isset($adjustedgrade)) {
-        $totalgrade = grade_format_gradevalue($adjustedgrade['grade'], $course_total_item, true);
-	$sggrademax = grade_format_gradevalue($adjustedgrade['grademax'], $course_total_item, true);
+        $totalgrade = grade_format_gradevalue($adjustedgrade['grade'], $coursetotalitem, true);
+        $sggrademax = grade_format_gradevalue($adjustedgrade['grademax'], $coursetotalitem, true);
     } else {
         $totalgrade = '-';
-	$sggrademax = '-';
+        $sggrademax = '-';
     }
-    if ($course_total_item->hidden) {
+    if ($coursetotalitem->hidden) {
         $totalgrade = get_string('hidden', 'block_grades_at_a_glance');
     }
     return array($totalgrade, $sggrademax);

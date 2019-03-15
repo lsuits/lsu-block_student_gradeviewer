@@ -1,6 +1,30 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once '../../config.php';
+
+/**
+ * The main block file.
+ *
+ * @package    block_ues_people
+ * @copyright  2014 Louisiana State University
+ * @copyright  2014 Philip Cali, Jason Peak, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+require_once('../../config.php');
 require_once($CFG->dirroot . '/blocks/student_gradeviewer/lib.php');
 require_once($CFG->dirroot . '/blocks/student_gradeviewer/classes/total_grade.php');
 require_once($CFG->dirroot . '/grade/lib.php');
@@ -23,33 +47,35 @@ if (!$mentor) {
     print_error('no_permission', 'block_student_gradeviewer');
 }
 
-$base_url = new moodle_url('/blocks/student_gradeviewer/viewgrades.php', array(
+$baseurl = new moodle_url('/blocks/student_gradeviewer/viewgrades.php', array(
     'id' => $id
 ));
 
-$_s = ues::gen_str('block_student_gradeviewer');
+$s = ues::gen_str('block_student_gradeviewer');
 
-$blockname = $_s('pluginname');
+$blockname = $s('pluginname');
 $student = fullname($user);
 
 $PAGE->set_context($context);
-$PAGE->set_url($base_url);
+$PAGE->set_url($baseurl);
 $PAGE->navbar->add($blockname);
 $PAGE->navbar->add($student);
-$PAGE->set_title($_s('viewgrades', $student));
+$PAGE->set_title($s('viewgrades', $student));
 $PAGE->set_heading("$blockname: $student");
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading_with_help(
-    $_s('viewgrades', $student), 'viewgrades', 'block_student_gradeviewer'
+    $s('viewgrades', $student), 'viewgrades', 'block_student_gradeviewer'
 );
 
-$_i = function($key) { return get_string($key, 'grades'); };
+$i = function($key) {
+    return get_string($key, 'grades');
+};
 
 $courses = enrol_get_users_courses($id);
 
 if (empty($courses)) {
-    echo $OUTPUT->notification($_s('no_courses', $student));
+    echo $OUTPUT->notification($s('no_courses', $student));
     echo $OUTPUT->footer();
     exit();
 }
@@ -60,7 +86,7 @@ $courseid = empty($courseid) ? key($courses) : $courseid;
 echo $OUTPUT->box_start();
 echo html_writer::start_tag('ul', array('class' => 'course-grades'));
 foreach ($options as $cid => $display) {
-    $url = new moodle_url($base_url, array('courseid' => $cid));
+    $url = new moodle_url($baseurl, array('courseid' => $cid));
     $link = html_writer::link($url, $display);
     $params = array('class' => 'graded-course');
 
@@ -85,11 +111,11 @@ grade_regrade_final_grades($course->id);
 $table = new html_table();
 
 $table->head = array(
-    $_i('itemname'), $_i('category'),
-    $_i('overridden') . $OUTPUT->help_icon('overridden', 'grades'),
-    $_i('excluded') . $OUTPUT->help_icon('excluded', 'grades'),
-    $_i('hidden') . $OUTPUT->help_icon('hidden', 'grades'),
-    $_i('range'), $_i('rank'), $_i('feedback'), $_i('finalgrade') . ' / ' . $_i('grademax')
+    $i('itemname'), $i('category'),
+    $i('overridden') . $OUTPUT->help_icon('overridden', 'grades'),
+    $i('excluded') . $OUTPUT->help_icon('excluded', 'grades'),
+    $i('hidden') . $OUTPUT->help_icon('hidden', 'grades'),
+    $i('range'), $i('rank'), $i('feedback'), $i('finalgrade') . ' / ' . $i('grademax')
 );
 
 $tree = new grade_tree($course->id, true, true, null, !$CFG->enableoutcomes);
@@ -98,7 +124,7 @@ $context = context_course::instance($course->id);
 
 // In case there is more than one role, grab a user that is graded.
 foreach ($graded as $gradedrole) {
-  $total_users = get_role_users($gradedrole, $context);
+    $totalusers = get_role_users($gradedrole, $context);
 }
 
 foreach ($tree->get_items() as $item) {
@@ -106,7 +132,7 @@ foreach ($tree->get_items() as $item) {
 
     $parent = $item->get_parent_category();
 
-    // Load item, but don't create
+    // Load item, but don't create it.
     $grade = $item->get_grade($id, false);
 
     if (empty($grade->id)) {
@@ -125,12 +151,14 @@ foreach ($tree->get_items() as $item) {
     $line[] = $item->is_hidden() ? 'Y' : 'N';
     $line[] = format_float($item->grademin, $decimals) . ' - ' .
         format_float($item->grademax, $decimals);
-    $line[] = student_gradeviewer::rank($context, $grade, $total_users);
+    $line[] = student_gradeviewer::rank($context, $grade, $totalusers);
     $line[] = format_text($grade->feedback, $grade->feedbackformat);
     if ($item->itemtype == 'course') {
         $finalsggrade = sg_get_grade_for_course($course->id, $user->id);
-        $line[] = $finalsggrade[0] ? $finalsggrade[0] . ' / ' . $finalsggrade[1] : grade_format_gradevalue($grade->finalgrade, $item) . ' / ' . grade_format_gradevalue($item->grademax, $item);
-    } else { 
+            $line[] = $finalsggrade[0] ?
+            $finalsggrade[0] . ' / ' . $finalsggrade[1] :
+            grade_format_gradevalue($grade->finalgrade, $item) . ' / ' . grade_format_gradevalue($item->grademax, $item);
+    } else {
         $line[] = grade_format_gradevalue($grade->finalgrade, $item) . ' / ' . grade_format_gradevalue($item->grademax, $item);
     }
     $table->data[] = $line;

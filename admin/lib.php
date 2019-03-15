@@ -1,13 +1,38 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once dirname(dirname(__FILE__)) . '/classes/lib.php';
+
+/**
+ *
+ * @package    block_student_gradeviewer
+ * @copyright  2014 Louisiana State University
+ * @copyright  2014 Philip Cali, Jason Peak, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once(dirname(dirname(__FILE__)) . '/classes/lib.php');
 
 abstract class student_mentor_admin_page {
     protected $name;
     protected $type;
     protected $path;
 
-    // Capabilities required to use this admin page
+    // Capabilities required to use this admin page.
     protected $capabilities = array();
     protected $errors = array();
 
@@ -102,31 +127,31 @@ abstract class student_mentor_admin_page {
 
         $table = new html_table();
 
-        $selected_users = $this->get_selected_users();
-        $selected_select = html_writer::select(
-            $selected_users, 'selected_users[]', '', '',
+        $selectedusers = $this->get_selected_users();
+        $selectedselect = html_writer::select(
+            $selectedusers, 'selected_users[]', '', '',
             array('class' => 'main_selector', 'multiple' => '', 'size' => 15)
         );
 
         $search = optional_param('searchtext', '', PARAM_RAW);
 
-        $available_users = $this->get_available_users(
-            array_keys($selected_users), $search
+        $availableusers = $this->get_available_users(
+            array_keys($selectedusers), $search
         );
-        $available_select = html_writer::select(
-            $available_users, 'available_users[]', '', '',
+        $availableselect = html_writer::select(
+            $availableusers, 'available_users[]', '', '',
             array('class' => 'main_selector', 'multiple' => '', 'size' => 15)
         );
 
-        $_s = ues::gen_str('block_student_gradeviewer');
+        $s = ues::gen_str('block_student_gradeviewer');
         $header = array('class' => 'select_header');
 
-        $table->head = array($_s('selected'), $_s('available'));
+        $table->head = array($s('selected'), $s('available'));
 
         $table->data = array(
             new html_table_row(array(
-                $selected_select,
-                $available_select
+                $selectedselect,
+                $availableselect
             )),
             new html_table_row(array('',
                 html_writer::start_tag('div', array('class' => 'searchbox')) .
@@ -147,7 +172,7 @@ abstract class student_mentor_admin_page {
             ))
         );
 
-        $hidden_input = function($name, $value) {
+        $hiddeninput = function($name, $value) {
             return html_writer::empty_tag('input', array(
                 'type' => 'hidden',
                 'name' => $name,
@@ -156,9 +181,9 @@ abstract class student_mentor_admin_page {
         };
 
         $hiddens = html_writer::tag('div',
-            $hidden_input('path', $this->path) .
-            $hidden_input('type', $this->get_type()) .
-            $hidden_input('sesskey', sesskey())
+            $hiddeninput('path', $this->path) .
+            $hiddeninput('type', $this->get_type()) .
+            $hiddeninput('sesskey', sesskey())
         );
 
         $submits = html_writer::start_tag('div', array('class' => 'submitbuttons'));
@@ -200,18 +225,18 @@ abstract class student_mentor_admin_page {
     public function get_available_users($selectedids, $search) {
         global $DB;
 
-        // Only show users after query
+        // Only show users after query.
         if (empty($search)) {
             return array();
         }
 
         $fullname = $DB->sql_fullname();
 
-        $fullname_like = $DB->sql_like($fullname, ':fullname', false, false);
-        $email_like = $DB->sql_like('email', ':email', false, false);
+        $fullnamelike = $DB->sql_like($fullname, ':fullname', false, false);
+        $emaillike = $DB->sql_like('email', ':email', false, false);
 
         $sql = "SELECT * FROM {user}
-            WHERE deleted = 0 AND ($fullname_like OR $email_like)";
+            WHERE deleted = 0 AND ($fullnamelike OR $emaillike)";
 
         if (!empty($selectedids)) {
             $sql .= ' AND id NOT IN (' . implode(',', $selectedids) . ')';
@@ -221,15 +246,16 @@ abstract class student_mentor_admin_page {
 
         $users = $DB->get_records_sql($sql, $params, 0, 100);
 
-        $to_named = function($u) { return fullname($u) . " ($u->email)"; };
-        return array_map($to_named, $users);
+        $tonamed = function($u) {
+            return fullname($u) . " ($u->email)";
+        };
+
+        return array_map($tonamed, $users);
     }
 
     public function get_selected_users() {
         $class = $this->type;
-
         $selected = $class::get_all(ues::where()->path->equal($this->path));
-
         $rtn = array();
         foreach ($selected as $assign) {
             $user = $assign->user();
@@ -240,17 +266,17 @@ abstract class student_mentor_admin_page {
     }
 
     public static function gather_files() {
-        $filter = function($file) { return preg_match('/^admin_/', $file); };
+        $filter = function($file) {
+            return preg_match('/^admin_/', $file);
+        };
 
         return array_filter(scandir(dirname(__FILE__)), $filter);
     }
 
     public static function gather_all_classes() {
         $instantiate = function($file) {
-            require_once dirname(__FILE__) . '/' . $file;
-
-            list($class, $__) = explode('.', $file);
-
+            require_once(dirname(__FILE__) . '/' . $file);
+            list($class, $extension) = explode('.', $file);
             return new $class();
         };
 
@@ -258,13 +284,17 @@ abstract class student_mentor_admin_page {
     }
 
     public static function gather_classes() {
-        $acceptable = function($c) { return $c->can_use(); };
-        $to_type = function($c) { return $c->get_type(); };
+        $acceptable = function($c) {
+            return $c->can_use();
+        };
 
-        $all_classes = self::gather_all_classes();
+        $totype = function($c) {
+            return $c->get_type();
+        };
 
-        $usable = array_filter($all_classes, $acceptable);
-        $types = array_map($to_type, $usable);
+        $allclasses = self::gather_all_classes();
+        $usable = array_filter($allclasses, $acceptable);
+        $types = array_map($totype, $usable);
 
         return array_combine($types, $usable);
     }
@@ -291,12 +321,12 @@ abstract class student_mentor_role_assign extends student_mentor_admin_page {
         $class = $this->type;
 
         $params = array('userid' => $userid);
-        $total_assigns = (
+        $totalassigns = (
             $class::count($params) +
             person_mentor::count($params)
         );
 
-        if (empty($total_assigns)) {
+        if (empty($totalassigns)) {
             role_unassign($roleid, $userid, $context->id, $component);
         }
     }

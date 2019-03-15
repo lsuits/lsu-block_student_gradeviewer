@@ -1,10 +1,35 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
+
+/**
+ *
+ * @package    block_student_gradeviewer
+ * @copyright  2014 Louisiana State University
+ * @copyright  2014 Philip Cali, Jason Peak, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/enrol/ues/publiclib.php');
 ues::require_daos();
 
 abstract class mentor_base extends ues_external {
-    var $user;
+    public $user;
 
     public $userid;
     public $path;
@@ -87,13 +112,13 @@ class sports_mentor extends mentor_base {
     }
 
     public static function meta() {
-        $meta_names = ues_user::get_meta_names();
+        $metanames = ues_user::get_meta_names();
 
-        $only_sports = function($name) {
+        $onlysports = function($name) {
             return preg_match('/sport/', $name);
         };
 
-        return array_filter($meta_names, $only_sports);
+        return array_filter($metanames, $onlysports);
     }
 
     public static function all_sports() {

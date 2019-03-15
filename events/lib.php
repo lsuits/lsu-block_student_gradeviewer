@@ -1,8 +1,31 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot . '/blocks/student_gradeviewer/classes/lib.php';
-require_once $CFG->dirroot . '/blocks/ues_meta_viewer/classes/support.php';
-require_once $CFG->dirroot . '/blocks/ues_meta_viewer/classes/lib.php';
+/**
+ * @package    block_student_gradeviewer
+ * @copyright  2008-2019 Louisiana State University
+ * @copyright  2008-2019 Adam Zapletal, Jason Peak, Chad Mazilly, Philip Cali, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/blocks/student_gradeviewer/classes/lib.php');
+require_once($CFG->dirroot . '/blocks/ues_meta_viewer/classes/support.php');
+require_once($CFG->dirroot . '/blocks/ues_meta_viewer/classes/lib.php');
 
 class student_sports_gradeviewer implements supported_meta {
     public function wrapped_class() {
@@ -52,7 +75,7 @@ class sports_grade_dropdown extends meta_data_ui_element {
     public function sql($dsl) {
         $value = $this->value();
 
-        // Tried to spoof it
+        // Tried to spoof it.
         if (!isset($this->sports[$value])) {
             $value = null;
         }
@@ -68,24 +91,24 @@ class sports_grade_dropdown extends meta_data_ui_element {
                 $sports = sports_mentor::menu($params);
                 $people = person_mentor::menu($params);
 
-                $sport_sub = $this->sub(ues::where()
+                $sportsub = $this->sub(ues::where()
                     ->value->in($sports)->name->in($this->meta));
 
                 if (!empty($people)) {
-                    $person_select = 'SELECT id AS userid FROM {user} WHERE ';
-                    $person_select .= ues::where()->id->in($people)->sql();
+                    $personselect = 'SELECT id AS userid FROM {user} WHERE ';
+                    $personselect .= ues::where()->id->in($people)->sql();
 
-                    $sport_sub = "($sport_sub) UNION ($person_select)";
+                    $sportsub = "($sportsub) UNION ($personselect)";
                 }
 
-                return $dsl->join("($sport_sub)", 'sports')->on('id', 'userid');
+                return $dsl->join("($sportsub)", 'sports')->on('id', 'userid');
             }
         }
 
         $filters = ues::where()->value->equal($value)->name->in($this->meta);
-        $sub_select = $this->sub($filters);
+        $subselect = $this->sub($filters);
 
-        return $dsl->join("($sub_select)", 'sports')->on('id', 'userid');
+        return $dsl->join("($subselect)", 'sports')->on('id', 'userid');
     }
 
     public function html() {
@@ -116,21 +139,21 @@ class sports_grade_dropdown extends meta_data_ui_element {
 class sports_grade_meta_text extends meta_data_text_box {
     public function format($user) {
         switch ($this->key()) {
-        case 'username':
-            $base = '/blocks/student_gradeviewer/viewgrades.php';
-            $url = new moodle_url($base, array('id' => $user->id));
-            return html_writer::link($url, $user->username);
-        case 'user_reg_status':
-            return isset($user->user_reg_status) ?
-                date('m-d-Y', $user->user_reg_status) :
-                parent::format($user);
-        default:
-            return parent::format($user);
+            case 'username':
+                $base = '/blocks/student_gradeviewer/viewgrades.php';
+                $url = new moodle_url($base, array('id' => $user->id));
+                return html_writer::link($url, $user->username);
+            case 'user_reg_status':
+                return isset($user->user_reg_status) ?
+                    date('m-d-Y', $user->user_reg_status) :
+                    parent::format($user);
+            default:
+                return parent::format($user);
         }
     }
 }
 
-// TODO: perhaps handling the user role assignment events to clear DB
+// Perhaps we should utilize the user role assignment events to clear DB.
 abstract class student_gradeviewer_handlers {
     public static function user_deleted($user) {
         $mentor = ues::where()->userid->equal($user->id);
@@ -144,10 +167,10 @@ abstract class student_gradeviewer_handlers {
     }
 
     public static function ues_meta_supported_types($data) {
-        // Add links to the viewer
+        // Add links to the viewer.
         $data->types['sports_grade'] = new student_sports_gradeviewer();
 
-        // TODO: academic link
+        // Academic link.
         return $data;
     }
 

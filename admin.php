@@ -1,11 +1,35 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once '../../config.php';
-require_once 'admin/lib.php';
+
+/**
+ * The main block file.
+ *
+ * @package    block_ues_people
+ * @copyright  2014 Louisiana State University
+ * @copyright  2014 Philip Cali, Jason Peak, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+require_once('../../config.php');
+require_once($CFG->dirroot . '/blocks/student_gradeviewer/admin/lib.php');
 
 require_login();
 
-$admin_type = optional_param('type', 'person_mentor', PARAM_TEXT);
+$admintype = optional_param('type', 'person_mentor', PARAM_TEXT);
 
 $context = context_system::instance();
 
@@ -20,20 +44,20 @@ if (!$admin) {
 
 $classes = student_mentor_admin_page::gather_classes();
 
-if (!isset($classes[$admin_type])) {
-    $admin_type = 'person_mentor';
+if (!isset($classes[$admintype])) {
+    $admintype = 'person_mentor';
 }
 
-$form = $classes[$admin_type];
+$form = $classes[$admintype];
 
-$base_url = new moodle_url('/blocks/student_gradeviewer/admin.php');
+$baseurl = new moodle_url('/blocks/student_gradeviewer/admin.php');
 
-$_s = ues::gen_str('block_student_gradeviewer');
-$blockname = $_s('pluginname');
-$heading = $_s('admin');
+$s = ues::gen_str('block_student_gradeviewer');
+$blockname = $s('pluginname');
+$heading = $s('admin');
 
 $PAGE->set_context($context);
-$PAGE->set_url($base_url);
+$PAGE->set_url($baseurl);
 $PAGE->set_title("$blockname: $heading");
 $PAGE->set_heading("$blockname: $heading");
 $PAGE->set_pagetype('mentor-administration');
@@ -43,10 +67,13 @@ $PAGE->navbar->add($heading);
 
 echo $OUTPUT->header();
 
-$to_name = function($class) { return $class->get_name(); };
+$toname = function($class) {
+    return $class->get_name();
+};
+
 echo $OUTPUT->single_select(
-    $base_url, 'type',
-    array_map($to_name, $classes), $admin_type
+    $baseurl, 'type',
+    array_map($toname, $classes), $admintype
 );
 
 echo $OUTPUT->heading($form->get_name());

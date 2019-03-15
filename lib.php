@@ -1,6 +1,29 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-require_once $CFG->dirroot . '/enrol/ues/publiclib.php';
+/**
+ * @package    block_student_gradeviewer
+ * @copyright  2008-2019 Louisiana State University
+ * @copyright  2008-2019 Adam Zapletal, Jason Peak, Chad Mazilly, Philip Cali, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/enrol/ues/publiclib.php');
 require_once($CFG->libdir . '/grade/grade_item.php');
 require_once($CFG->libdir . '/grade/grade_grade.php');
 require_once($CFG->libdir . '/gradelib.php');
@@ -13,24 +36,24 @@ abstract class student_gradeviewer {
         return function($course) use ($userid) {
             $name = $course->fullname;
 
-            $course_item = grade_item::fetch_course_item($course->id);
+            $courseitem = grade_item::fetch_course_item($course->id);
 
-            if (empty($course_item)) {
+            if (empty($courseitem)) {
                 return "$name -";
             }
 
-            $grade = $course_item->get_grade($userid);
+            $grade = $courseitem->get_grade($userid);
             if (empty($grade->id)) {
                 $grade->finalgrade = null;
             }
 
-            $display = grade_format_gradevalue($grade->finalgrade, $course_item);
+            $display = grade_format_gradevalue($grade->finalgrade, $courseitem);
             return "$name $display";
         };
     }
 
-    public static function rank($context, $grade, $total_users) {
-        $ids = array_keys($total_users);
+    public static function rank($context, $grade, $totalusers) {
+        $ids = array_keys($totalusers);
         $count = count($ids);
 
         if (empty($grade->finalgrade)) {

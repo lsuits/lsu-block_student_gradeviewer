@@ -1,4 +1,30 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+
+/**
+ * The main block file.
+ *
+ * @package    block_ues_people
+ * @copyright  2014 Louisiana State University
+ * @copyright  2014 Philip Cali, Jason Peak, Robert Russo
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die();
 
 class admin_person_mentor extends student_mentor_admin_page {
     public function __construct() {
@@ -22,8 +48,13 @@ class admin_person_mentor extends student_mentor_admin_page {
 
         $options = array();
 
-        $to_named = function($user) { return fullname($user); };
-        $to_userid = function($assign) { return $assign->userid; };
+        $tonamed = function($user) {
+            return fullname($user);
+        };
+
+        $touserid = function($assign) {
+            return $assign->userid;
+        };
 
         foreach ($this->parents as $parent) {
             $label = get_string($parent, 'block_student_gradeviewer');
@@ -34,7 +65,7 @@ class admin_person_mentor extends student_mentor_admin_page {
                 continue;
             }
 
-            $userids = array_values(array_map($to_userid, $assigns));
+            $userids = array_values(array_map($touserid, $assigns));
 
             $filters = ues::where()->id->in($userids);
             $users = ues_user::get_all($filters, 'firstname, lastname ASC');
@@ -43,7 +74,7 @@ class admin_person_mentor extends student_mentor_admin_page {
                 $selected = fullname($users[$this->path]);
             }
 
-            $options[] = array($label => array_map($to_named, $users));
+            $options[] = array($label => array_map($tonamed, $users));
         }
 
         $url = new moodle_url('/blocks/student_gradeviewer/admin.php', array(
@@ -86,8 +117,8 @@ class admin_person_mentor extends student_mentor_admin_page {
         global $OUTPUT;
 
         if (empty($this->path)) {
-            $no_one = get_string('na_person', 'block_student_gradeviewer');
-            return $OUTPUT->box($OUTPUT->notification($no_one));
+            $noone = get_string('na_person', 'block_student_gradeviewer');
+            return $OUTPUT->box($OUTPUT->notification($noone));
         } else {
             return parent::user_form();
         }
