@@ -187,7 +187,20 @@ abstract class student_gradeviewer_handlers {
             'user_major',
             'user_keypadid'
         );
+        $data->keys = array_filter($data->keys, function($key) use ($keep) {
+            return in_array($key, $keep);
+        });
 
+        $data->keys[] = 'specified_sport';
+
+        return true;
+    }
+
+    public static function sports_id_data_ui_keys($data) {
+        // TODO: re-evaluate important fields... do they need FERPA?
+        $keep = array(
+            'id'
+        );
         $data->keys = array_filter($data->keys, function($key) use ($keep) {
             return in_array($key, $keep);
         });
